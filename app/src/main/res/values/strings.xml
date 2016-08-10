@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">ActivityRecognition</string>
+    <string name="request_updates_string">Request Updates</string>
+    <string name="clear_updates_string">Clear Updates</string>
+
+    <string name="on_foot">On foot</string>
+    <string name="in_vehicle">In a vehicle</string>
+    <string name="running">Running</string>
+    <string name="on_bicycle">On a bicycle</string>
+    <string name="still">Standing still</string>
+    <string name="tilting">Tilting</string>
+    <string name="walking">Walking</string>
+    <string name="unknown">Unknown</string>
+
+
+</resources>
