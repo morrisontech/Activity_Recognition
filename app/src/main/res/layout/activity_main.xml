@@ -16,7 +16,7 @@
         android:layout_below="@+id/button_request_updates"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:textSize="32dp" />
+        android:textSize="32sp" />
 
     <Button
         android:layout_width="150dp"

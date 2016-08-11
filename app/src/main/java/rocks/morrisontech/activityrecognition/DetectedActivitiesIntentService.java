@@ -19,6 +19,10 @@ public class DetectedActivitiesIntentService extends IntentService {
         super(TAG); // use the tag to name the worker thread
     }
 
+    public void onCreate() {
+        super.onCreate();
+    }
+
     @Override
     protected void onHandleIntent(Intent intent) {
         ActivityRecognitionResult activityRecognitionResult = ActivityRecognitionResult.extractResult(intent);

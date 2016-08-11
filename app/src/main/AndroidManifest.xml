@@ -3,7 +3,7 @@
     package="rocks.morrisontech.activityrecognition">
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
+
 
     <application
         android:allowBackup="true"
@@ -25,5 +25,6 @@
         <!-- exported value means other apps cannot access this particular service -->
 
     </application>
+    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
 
 </manifest>

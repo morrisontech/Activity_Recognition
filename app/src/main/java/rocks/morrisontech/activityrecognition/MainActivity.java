@@ -7,13 +7,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,22 +32,54 @@ public class MainActivity extends AppCompatActivity
     private static final String TAG = "ACTIVITY_RECOGNITION";
     protected GoogleApiClient mGoogleApiClient;
     protected ActivityDetectionBroadcastReceiver mBroadcastReceiver;
-    protected TextView statusTextView;
-    protected Button requestButton, removeButton;
+    protected TextView mStatusText;
+    //protected Button requestButton, removeButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        statusTextView = (TextView) findViewById(R.id.detected_activities_text);
-        requestButton = (Button) findViewById(R.id.button_request_updates);
-        removeButton = (Button) findViewById(R.id.button_clear_updates);
+        mStatusText = (TextView) findViewById(R.id.detected_activities_text);
+//        requestButton = (Button) findViewById(R.id.button_request_updates);
+//        removeButton = (Button) findViewById(R.id.button_clear_updates);
         mBroadcastReceiver = new ActivityDetectionBroadcastReceiver();
         buildGoogleApiClient();
+    }
 
+    public void requestActivityUpdatesButtonHandler(View view) {
+        if(!mGoogleApiClient.isConnected()) {
+            Toast.makeText(this, "API Client not connected", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
+        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(
+                mGoogleApiClient,
+                100,
+                getActivityDetectionPendingIntent()
+        ).setResultCallback(this);
+//        requestButton.setEnabled(false);
+//        removeButton.setEnabled(true);
 
+    }
+
+    public void removeActivityUpdatesButtonHandler(View view) {
+        if(!mGoogleApiClient.isConnected()) {
+            Toast.makeText(this, "API Client not connected", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(
+                mGoogleApiClient,
+                getActivityDetectionPendingIntent()
+        ).setResultCallback(this);
+//        requestButton.setEnabled(true);
+//        removeButton.setEnabled(false);
+    }
+
+    public PendingIntent getActivityDetectionPendingIntent() {
+        Log.i("pending intent", "got pending intent");
+        Intent intent = new Intent(this, DetectedActivitiesIntentService.class);
+        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     protected synchronized void buildGoogleApiClient() {
@@ -59,11 +88,57 @@ public class MainActivity extends AppCompatActivity
                 .addOnConnectionFailedListener(this)
                 .addApi(ActivityRecognition.API)
                 .build();
+        Log.i("buildGoogleApiClient", "executed");
     }
 
     @Override
-    public void onConnected(@Nullable Bundle bundle) {
+    public void onResult(Status status) {
+        if (status.isSuccess()) {
+            Log.i("API connection result", "Successfully added activity detection API");
+        }
+        else
+            Log.e("API Connection result", "Could not add activity detection API" + status.getStatusMessage());
+
+    }
+
+    public void onStart() {
+        super.onStart();
+
+        mGoogleApiClient.connect();
+        Log.i("onStart", "onStart executed");
+
+    }
+
+    public void onStop() {
+        super.onStop();
+
+        mGoogleApiClient.disconnect();
+    }
+
+    public void onResume() {
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver,
+                new IntentFilter(Constants.BROADCAST_ACTION));
+
+        super.onResume();
+        Log.i("onResume", "onResume executed");
+    }
+
+    public void onPause() {
+        super.onPause();
+
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
+        Log.i("onPause", "onPause Executed");
+    }
+
+    @Override
+    public void onConnected(Bundle connectionHint) {
         Log.i(TAG, "onConnected");
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        Log.i(TAG, "onConnectionFailed");
     }
 
     @Override
@@ -73,13 +148,11 @@ public class MainActivity extends AppCompatActivity
         Log.i(TAG, "onConnectionSuspended");
     }
 
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        Log.i(TAG, "onConnectionFailed");
-    }
+
 
     public String getActivityString(int detectedActivityType) {
         Resources resources = this.getResources();
+        Log.i("getActivityString", "getting strings...");
         switch (detectedActivityType) {
             case DetectedActivity.IN_VEHICLE:
                 return resources.getString(R.string.in_vehicle);
@@ -100,90 +173,23 @@ public class MainActivity extends AppCompatActivity
             default:
                 return resources.getString(R.string.unknown);
         }
-    }
 
-    public void onStart() {
-        super.onStart();
-
-        mGoogleApiClient.connect();
-
-    }
-
-    public void onStop() {
-        super.onStop();
-
-        mGoogleApiClient.disconnect();
-    }
-
-    public void onPause() {
-        super.onPause();
-
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
-    }
-
-    public void onResume() {
-
-        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver,
-            new IntentFilter());
-
-        super.onResume();
-    }
-
-    public void requestActivityUpdatesButtonHandler(View view) {
-        if(!mGoogleApiClient.isConnected()) {
-            Toast.makeText(this, "API Client not connected", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(
-                mGoogleApiClient,
-                1000,
-                getActivityDetectionPendingIntent()
-        ).setResultCallback(this);
-        requestButton.setEnabled(false);
-        removeButton.setEnabled(true);
-
-    }
-
-    public void removeActivityUpdatesButtonHandler(View view) {
-        if(!mGoogleApiClient.isConnected()) {
-            Toast.makeText(this, "API Client not connected", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(
-                mGoogleApiClient,
-                getActivityDetectionPendingIntent()
-        ).setResultCallback(this);
-        requestButton.setEnabled(true);
-        removeButton.setEnabled(false);
-    }
-
-    public PendingIntent getActivityDetectionPendingIntent() {
-        Intent intent = new Intent(this, DetectedActivitiesIntentService.class);
-        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-    }
-
-    @Override
-    public void onResult(@NonNull Status status) {
-        if (status.isSuccess()) {
-            Log.i("API connection result", "Successfully added activity detection API");
-        }
-        else
-            Log.e("API Connection result", "Could not add activity detection API" + status.getStatusMessage());
     }
 
     public class ActivityDetectionBroadcastReceiver extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
+
+            Log.i("onReceive", "broadcast receiver working");
+
             ArrayList<DetectedActivity> detectedActivities =
                     intent.getParcelableArrayListExtra(Constants.ACTIVITY_RECOGNITION_EXTRA);
 
             String strStatus = "";
             for (DetectedActivity thisActivity: detectedActivities) {
                 strStatus += getActivityString(thisActivity.getType()) + thisActivity.getConfidence() + "%\n";
-                statusTextView.setText(strStatus);
+                mStatusText.setText(strStatus);
             }
         }
     }
