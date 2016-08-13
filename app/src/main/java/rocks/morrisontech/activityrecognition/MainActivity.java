@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -33,7 +34,6 @@ public class MainActivity extends AppCompatActivity
     protected GoogleApiClient mGoogleApiClient;
     protected ActivityDetectionBroadcastReceiver mBroadcastReceiver;
     protected TextView mStatusText;
-    //protected Button requestButton, removeButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,8 +41,6 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
 
         mStatusText = (TextView) findViewById(R.id.detected_activities_text);
-//        requestButton = (Button) findViewById(R.id.button_request_updates);
-//        removeButton = (Button) findViewById(R.id.button_clear_updates);
         mBroadcastReceiver = new ActivityDetectionBroadcastReceiver();
         buildGoogleApiClient();
     }
@@ -58,8 +56,6 @@ public class MainActivity extends AppCompatActivity
                 100,
                 getActivityDetectionPendingIntent()
         ).setResultCallback(this);
-//        requestButton.setEnabled(false);
-//        removeButton.setEnabled(true);
 
     }
 
@@ -72,8 +68,6 @@ public class MainActivity extends AppCompatActivity
                 mGoogleApiClient,
                 getActivityDetectionPendingIntent()
         ).setResultCallback(this);
-//        requestButton.setEnabled(true);
-//        removeButton.setEnabled(false);
     }
 
     public PendingIntent getActivityDetectionPendingIntent() {
@@ -92,7 +86,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onResult(Status status) {
+    public void onResult(@NonNull Status status) {
         if (status.isSuccess()) {
             Log.i("API connection result", "Successfully added activity detection API");
         }
@@ -137,7 +131,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         Log.i(TAG, "onConnectionFailed");
     }
 
@@ -176,6 +170,9 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    /**
+     * receives any Intent Broadcasts with onReceive method
+     */
     public class ActivityDetectionBroadcastReceiver extends BroadcastReceiver {
 
         @Override
@@ -183,12 +180,13 @@ public class MainActivity extends AppCompatActivity
 
             Log.i("onReceive", "broadcast receiver working");
 
+            // this ArrayList will store the detectedActivities determined in DetectedActivitiesIntentService
             ArrayList<DetectedActivity> detectedActivities =
                     intent.getParcelableArrayListExtra(Constants.ACTIVITY_RECOGNITION_EXTRA);
 
             String strStatus = "";
             for (DetectedActivity thisActivity: detectedActivities) {
-                strStatus += getActivityString(thisActivity.getType()) + thisActivity.getConfidence() + "%\n";
+                strStatus += getActivityString(thisActivity.getType()) + ": " + thisActivity.getConfidence() + "%\n";
                 mStatusText.setText(strStatus);
             }
         }
